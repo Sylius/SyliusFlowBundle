@@ -6,6 +6,59 @@ Suitable for building checkouts or installations.
 
 This bundle is a **prototype**, it works only with latest Symfony.
 
+To get started you need to take this steps:
+
+1. Create a new bundle.
+2. Create a scenario class. In the URL the steps will be named after the given alias.
+3. Create a class for every step.
+4. Add `new Sylius\Bundle\FlowBundle\SyliusFlowBundle()` to your `AppKernel.php` class.
+5. Create a service based on the scenario class. Tag it with `sylius_flow.scenario`.
+   This makes sure it get's picked up. In the URL the scenario is named after the given alias.
+6. Now your new workflow is reachable at `http://your.webapp/flow/scenario-alias/step-alias`
+
+This may be helpful for your nex steps:
+
+* To proceed from one step to the next use this pattern `http://your.webapp/flow/{scenario-alias}/{step-alias}/forward`.
+   The command line 'php app/console router:debug' shows you the configured routes.
+* In [the sylius sandbox shop](https://github.com/Sylius/Sylius-Sandbox/tree/master/src/Sylius/Bundle/SandboxBundle/Process)
+   you find complete working example.
+
+## Twig snippet
+
+In order to get the URL in a twig template right you need something like this:
+
+``` twig
+<form action="{{ path('sylius_flow_forward', {'scenarioAlias': 'checkout', 'stepName': 'terms_and_condition'}) }}" method="post" {{ form_enctype(form) }}>
+    {{ form_widget(form) }}
+    <input type="submit" />
+</form>
+```
+
+## Service definition
+
+``` xml
+<!-- Resources/config/services.xml -->
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+
+        <parameters>
+            <parameter key="acme.checkout_bundle.checkout.scenario.class">Acme\Bundle\CheckoutBundle\Process\Scenario\CheckoutScenario</parameter>
+        </parameters>
+
+        <service id="acme.checkout_bundle.checkout.scenario" class="%acme.checkout_bundle.checkout.scenario.class%" public="true">
+            <tag name="sylius_flow.scenario" alias="checkout" />
+        </service>
+
+    </services>
+</container>
+```
+
+## Scenario class
+
 ``` php
 <?php
 
@@ -36,6 +89,8 @@ class CheckoutScenario implements ProcessScenarioInterface
     }
 }
 ```
+
+## Step class
 
 ``` php
 <?php
