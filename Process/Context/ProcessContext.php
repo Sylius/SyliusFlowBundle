@@ -294,10 +294,14 @@ class ProcessContext implements ProcessContextInterface
         }
 
         if (count($history)==0) {
-            throw new NotFoundHttpException();
+            $this->close();
+
+            return false;
         }
 
         $this->setStepHistory($history);
+
+        return true;
     }
 
     /**
