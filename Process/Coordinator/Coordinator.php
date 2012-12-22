@@ -79,16 +79,7 @@ class Coordinator implements CoordinatorInterface
      */
     public function start($scenarioAlias)
     {
-        $process = $this->buildProcess($scenarioAlias);
-        $step = $process->getFirstStep();
-
-        $this->context->initialize($process, $step);
-
-        if (!$this->context->isValid()) {
-            throw new NotFoundHttpException();
-        }
-
-        return $this->redirectToStepDisplayAction($process, $step);
+        return $this->process($scenarioAlias, null, 'start');
     }
 
     /**
@@ -96,19 +87,7 @@ class Coordinator implements CoordinatorInterface
      */
     public function display($scenarioAlias, $stepName)
     {
-        $process = $this->buildProcess($scenarioAlias);
-        $step = $process->getStepByName($stepName);
-
-        $this->context->initialize($process, $step);
-        $this->context->rewindHistory();
-
-        if (!$this->context->isValid()) {
-            throw new NotFoundHttpException();
-        }
-
-        $result = $step->displayAction($this->context);
-
-        return $this->processStepResult($process, $result);
+        return $this->process($scenarioAlias, $stepName, 'display');
     }
 
     /**
@@ -116,19 +95,7 @@ class Coordinator implements CoordinatorInterface
      */
     public function forward($scenarioAlias, $stepName)
     {
-        $process = $this->buildProcess($scenarioAlias);
-        $step = $process->getStepByName($stepName);
-
-        $this->context->initialize($process, $step);
-        $this->context->rewindHistory();
-
-        if (!$this->context->isValid()) {
-            throw new NotFoundHttpException();
-        }
-
-        $result = $step->forwardAction($this->context);
-
-        return $this->processStepResult($process, $result);
+        return $this->process($scenarioAlias, $stepName, 'forward');
     }
 
     public function processStepResult(ProcessInterface $process, $result)
@@ -218,19 +185,57 @@ class Coordinator implements CoordinatorInterface
     }
 
     /**
-     * Builds process for given scenario alias.
-     *
      * @param string $scenarioAlias
+     * @param string $stepName
+     * @param string $action
      *
-     * @return ProcessInterface
+     * @return mixed
+     * @throws \InvalidArgumentException
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
-    private function buildProcess($scenarioAlias)
+    private function process($scenarioAlias, $stepName, $action)
     {
-        $processScenario = $this->loadScenario($scenarioAlias);
-
-        $process = $this->builder->build($processScenario);
+        $process = $this
+            ->builder
+            ->build($this->loadScenario($scenarioAlias))
+        ;
         $process->setScenarioAlias($scenarioAlias);
 
-        return $process;
+        if (null === $stepName) {
+            $step = $process->getFirstStep();
+            $this->context->initialize($process, $step);
+            $this->context->close();
+        } else {
+            $step = $process->getStepByName($stepName);
+            $this->context->initialize($process, $step);
+
+            if (!$this->context->rewindHistory()) {
+                //history rewind failed this means that the rewind traversed whole history and didn't find
+                //a step with a name we need. The best thing we could do here is to redirect user to a first step.
+                $step = $process->getFirstStep();
+                return $this->redirectToStepDisplayAction($process, $step);
+            }
+        }
+
+        if (!$this->context->isValid()) {
+            throw new NotFoundHttpException();
+        }
+
+        switch ($action) {
+            case 'start':
+                return $this->redirectToStepDisplayAction($process, $step);
+                break;
+            case 'display':
+                $result = $step->displayAction($this->context);
+                break;
+            case 'forward';
+                $result = $step->forwardAction($this->context);
+                break;
+            default:
+                throw new \InvalidArgumentException(sprintf('%s is not a valid action parameter.', $action));
+        }
+
+        return $this->processStepResult($process, $result);
     }
+
 }

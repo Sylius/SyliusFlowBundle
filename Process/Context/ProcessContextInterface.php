@@ -148,9 +148,9 @@ interface ProcessContextInterface
     function addStepToHistory($stepName);
 
     /**
-     * Goes back from the end fo the histroy and deletes all step names until the current one is found.
+     * Goes back from the end fo the history and deletes all step names until the current one is found.
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException If the step name is not found in the history.
+     * @return boolean
      */
     function rewindHistory();
 
