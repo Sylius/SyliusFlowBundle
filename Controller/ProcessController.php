@@ -31,11 +31,11 @@ class ProcessController extends ContainerAware
      *
      * @return Response
      */
-    public function startAction($scenarioAlias)
+    public function startAction(Request $request, $scenarioAlias)
     {
         $coordinator = $this->container->get('sylius.process.coordinator');
 
-        return $coordinator->start($scenarioAlias);
+        return $coordinator->start($scenarioAlias, $request->query);
     }
 
     /**
@@ -54,7 +54,7 @@ class ProcessController extends ContainerAware
         $coordinator = $this->container->get('sylius.process.coordinator');
 
         try {
-            return $coordinator->display($scenarioAlias, $stepName);
+            return $coordinator->display($scenarioAlias, $stepName, $request->query);
         } catch (\InvalidArgumentException $e) {
             throw new NotFoundHttpException('The step you are looking for is not found.', $e);
         }

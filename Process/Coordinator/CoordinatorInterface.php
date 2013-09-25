@@ -11,6 +11,7 @@
 
 namespace Sylius\Bundle\FlowBundle\Process\Coordinator;
 
+use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -31,7 +32,7 @@ interface CoordinatorInterface
      *
      * @return RedirectResponse
      */
-    public function start($scenarioAlias);
+    public function start($scenarioAlias, ParameterBag $request = null);
 
     /**
      * Display step.

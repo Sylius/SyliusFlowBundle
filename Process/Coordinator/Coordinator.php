@@ -17,6 +17,8 @@ use Sylius\Bundle\FlowBundle\Process\ProcessInterface;
 use Sylius\Bundle\FlowBundle\Process\Scenario\ProcessScenarioInterface;
 use Sylius\Bundle\FlowBundle\Process\Step\ActionResult;
 use Sylius\Bundle\FlowBundle\Process\Step\StepInterface;
+use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -77,7 +79,7 @@ class Coordinator implements CoordinatorInterface
     /**
      * {@inheritdoc}
      */
-    public function start($scenarioAlias)
+    public function start($scenarioAlias, ParameterBag $request = null)
     {
         $process = $this->buildProcess($scenarioAlias);
         $step = $process->getFirstStep();
@@ -89,13 +91,13 @@ class Coordinator implements CoordinatorInterface
             return $validator->getResponse($step);
         }
 
-        return $this->redirectToStepDisplayAction($process, $step);
+        return $this->redirectToStepDisplayAction($process, $step, $request);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function display($scenarioAlias, $stepName)
+    public function display($scenarioAlias, $stepName, ParameterBag $request = null)
     {
         $process = $this->buildProcess($scenarioAlias);
         $step = $process->getStepByName($stepName);
@@ -108,7 +110,7 @@ class Coordinator implements CoordinatorInterface
             //the step we are supposed to display was not found in the history.
             if (null === $this->context->getPreviousStep()) {
                 //there is no previous step go to start
-                return $this->start($scenarioAlias);
+                return $this->start($scenarioAlias, $request);
             }
 
             //we will go back to previous step...
@@ -215,7 +217,7 @@ class Coordinator implements CoordinatorInterface
      *
      * @return RedirectResponse
      */
-    protected function redirectToStepDisplayAction(ProcessInterface $process, StepInterface $step)
+    protected function redirectToStepDisplayAction(ProcessInterface $process, StepInterface $step, ParameterBag $request = null)
     {
         $this->context->addStepToHistory($step->getName());
 
@@ -227,10 +229,18 @@ class Coordinator implements CoordinatorInterface
             return new RedirectResponse($url);
         }
 
-        $url = $this->router->generate('sylius_flow_display', array(
+        // Default parameters for this route
+        $routeParameters = array(
             'scenarioAlias' => $process->getScenarioAlias(),
-            'stepName'      => $step->getName()
-        ));
+            'stepName'      => $step->getName(),
+        );
+
+        // Append the query string if given
+        if (!empty($request)) {
+            $routeParameters = array_merge($request->all(), $routeParameters);
+        }
+
+        $url = $this->router->generate('sylius_flow_display', $routeParameters);
 
         return new RedirectResponse($url);
     }
