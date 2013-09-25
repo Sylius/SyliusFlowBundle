@@ -28,21 +28,23 @@ interface CoordinatorInterface
     /**
      * Start scenario, should redirect to first step.
      *
-     * @param string $scenarioAlias
+     * @param string       $scenarioAlias
+     * @param ParameterBag $queryParameters
      *
      * @return RedirectResponse
      */
-    public function start($scenarioAlias, ParameterBag $request = null);
+    public function start($scenarioAlias, ParameterBag $queryParameters = null);
 
     /**
      * Display step.
      *
-     * @param string $scenarioAlias
-     * @param string $stepName
+     * @param string       $scenarioAlias
+     * @param string       $stepName
+     * @param ParameterBag $queryParameters
      *
      * @return Response
      */
-    public function display($scenarioAlias, $stepName);
+    public function display($scenarioAlias, $stepName, ParameterBag $queryParameters = null);
 
     /**
      * Move forward.
