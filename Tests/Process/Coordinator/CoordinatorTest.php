@@ -130,8 +130,7 @@ class CoordinatorTest extends \PHPUnit_Framework_TestCase
         $processContext = $this->getProcessContext();
         $processContext->expects($this->any())
             ->method('isValid')
-            ->will($this->returnValue(new ProcessValidator('An error occurred.', null, function () { return false; })));
-
+            ->will($this->returnValue(false));
         $this->coordinator = $this->createCoordinator($router, $processBuilder, $processContext);
         $this->coordinator->registerScenario('scenarioOne', $this->getMock('Sylius\Bundle\FlowBundle\Process\Scenario\ProcessScenarioInterface'));
         $this->coordinator->start('scenarioOne');
@@ -162,7 +161,7 @@ class CoordinatorTest extends \PHPUnit_Framework_TestCase
         $processContext = $this->getProcessContext();
         $processContext->expects($this->any())
             ->method('isValid')
-            ->will($this->returnValue(new ProcessValidator('An error occurred.', null, function () { return false; })));
+            ->will($this->returnValue(false));
 
         $this->coordinator = $this->createCoordinator($router, $processBuilder, $processContext);
         $this->coordinator->registerScenario('scenarioOne', $this->getMock('Sylius\Bundle\FlowBundle\Process\Scenario\ProcessScenarioInterface'));
@@ -202,7 +201,7 @@ class CoordinatorTest extends \PHPUnit_Framework_TestCase
         $processContext = $this->getProcessContext();
         $processContext->expects($this->any())
             ->method('isValid')
-            ->will($this->returnValue(new ProcessValidator('An error occurred.', null, function () { return false; })));
+            ->will($this->returnValue(false));
 
         $this->coordinator = $this->createCoordinator($router, $processBuilder, $processContext);
         $this->coordinator->registerScenario('scenarioOne', $this->getMock('Sylius\Bundle\FlowBundle\Process\Scenario\ProcessScenarioInterface'));
@@ -435,7 +434,12 @@ class CoordinatorTest extends \PHPUnit_Framework_TestCase
 
     private function getProcessContext()
     {
-        return $this->getMock('Sylius\Bundle\FlowBundle\Process\Context\ProcessContextInterface');
+        $processContext = $this->getMock('Sylius\Bundle\FlowBundle\Process\Context\ProcessContextInterface');
+        $processContext->expects($this->any())
+            ->method('getProcess')
+            ->will($this->returnValue($this->getProcess()));
+        return $processContext;
+
     }
 
     private function getProcess()
@@ -465,6 +469,13 @@ class CoordinatorTest extends \PHPUnit_Framework_TestCase
         $process->expects($this->any())
             ->method('getRedirect')
             ->will($this->returnValue('http://localhost/processRedirect'));
+        $process->expects($this->any())
+            ->method('getValidator')
+            ->will($this->returnValue(new ProcessValidator('An error occurred.', null, function () { return false; })));
+        $process->expects($this->any())
+            ->method('getRedirectParams')
+            ->will($this->returnValue(array()));
+
 
         return $process;
     }
