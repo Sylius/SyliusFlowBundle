@@ -14,6 +14,7 @@ namespace Sylius\Bundle\FlowBundle\Process;
 use Sylius\Bundle\FlowBundle\Process\Coordinator\InvalidArgumentException;
 use Sylius\Bundle\FlowBundle\Process\Step\StepInterface;
 use Sylius\Bundle\FlowBundle\Validator\ProcessValidatorInterface;
+use Sylius\Bundle\FlowBundle\Process\Coordinator\InvalidArgumentException;
 
 /**
  * Base class for process.
